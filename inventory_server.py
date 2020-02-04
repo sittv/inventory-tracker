@@ -1,14 +1,34 @@
 from flask import Flask, request, jsonify
 
 from flask_restful import abort
+from flask_cors import CORS
 import db
 
+
 app = Flask(__name__)
+CORS(app)
 
 try:
     db.add_user("jesse", "fooey")
 except:
     pass
+
+
+@app.route("/api/check_login", methods=["POST"])
+def check_login():
+    content = request.json
+    password = content.get("password")
+    assert len(password) > 4
+
+    user_id = db.check_login(password)
+    db.log_event(user_id, password, f"check_login() with password {password}")
+
+    if user_id is None:
+        abort(403, messsage="Not authenticated")
+        return
+
+    return jsonify({"status": "good"})
+
 
 @app.route("/api/add_user", methods=["POST"])
 def add_user():
